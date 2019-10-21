@@ -4,18 +4,21 @@ const {
   google
 } = require('googleapis');
 
+const GOOGLE_SPREADSHEET = require('./constants');
+
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
+const SCOPES = GOOGLE_SPREADSHEET.SCOPE;
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
-const TOKEN_PATH = 'token.json';
+const TOKEN_PATH = GOOGLE_SPREADSHEET.TOKEN_PATH;
 
 // Load client secrets from a local file.
 fs.readFile('credentials.json', (err, content) => {
   if (err) return console.log('Error loading client secret file:', err);
   // Authorize a client with credentials, then call the Google Sheets API.
-  authorize(JSON.parse(content), listMajors);
+  // authorize(JSON.parse(content), getNetWorth);
+  authorize(JSON.parse(content), updateCell);
 });
 
 /**
@@ -73,29 +76,53 @@ function getNewToken(oAuth2Client, callback) {
 }
 
 /**
- * Prints the names and majors of students in a sample spreadsheet:
+ * Prints the total net worth cell:
  * @see https://docs.google.com/spreadsheets/d/1fgq8ImKrWsrpYUj7gSndnQ4CPyyG7sBUx0JPePh5pJA/edit
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
-function listMajors(auth) {
+function getNetWorth(auth) {
   const sheets = google.sheets({
     version: 'v4',
     auth
   });
   sheets.spreadsheets.values.get({
-    spreadsheetId: '1fgq8ImKrWsrpYUj7gSndnQ4CPyyG7sBUx0JPePh5pJA',
-    range: 'Expenses!I36:J',
+    spreadsheetId: GOOGLE_SPREADSHEET.ID,
+    range: GOOGLE_SPREADSHEET.NET_WORTH_TOTAL,
   }, (err, res) => {
     if (err) return console.log('The API returned an error: ' + err);
     const rows = res.data.values;
     if (rows.length) {
       console.log('Total Net Worth:');
-      // Print columns A and E, which correspond to indices 0 and 4.
       rows.map((row) => {
-        console.log(`${row[0]}, ${row[1]}`);
+        console.log(`${row[0]}`);
       });
     } else {
       console.log('No data found.');
     }
   });
 }
+
+function updateCell(auth) {
+  var sheets = google.sheets('v4');
+  var request = {
+    spreadsheetId: GOOGLE_SPREADSHEET.ID,
+    range: GOOGLE_SPREADSHEET.RANDOM,
+    valueInputOption: GOOGLE_SPREADSHEET.USER_ENTERED,
+    resource: {
+      values: [
+        [Math.random() * 100]
+      ],
+    },
+    auth,
+  };
+
+  sheets.spreadsheets.values.update(request, function (err, response) {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    // var result = response.result;
+    console.log(response.data);
+    // console.log(`${response} cells updated.`);
+  });
+};
