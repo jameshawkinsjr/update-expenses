@@ -1,3 +1,5 @@
 /node_modules/
-credentials.json
+.env
 token.json
+plaid_credentials.js
+credentials.json
